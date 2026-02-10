@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Logo placeholder - você pode substituir depois pela logo real -->
+  <rect width="200" height="200" fill="#1a4529"/>
+  <g transform="translate(100, 70)">
+    <!-- Diamante/losango decorativo -->
+    <path d="M 0,-40 L 30,-10 L 0,20 L -30,-10 Z" stroke="#d4af37" stroke-width="3" fill="none"/>
+    <path d="M 0,-30 L 20,-10 L 0,10 L -20,-10 Z" stroke="#d4af37" stroke-width="3" fill="none"/>
+    <path d="M 0,-20 L 10,-10 L 0,0 L -10,-10 Z" stroke="#d4af37" stroke-width="3" fill="none"/>
+  </g>
+  <text x="100" y="130" font-family="serif" font-size="24" fill="white" text-anchor="middle" font-weight="300">POUSADA</text>
+  <text x="100" y="155" font-family="serif" font-size="28" fill="white" text-anchor="middle" font-weight="700">VERDES ARCOS</text>
+  <text x="100" y="175" font-family="serif" font-size="12" fill="#d4af37" text-anchor="middle" letter-spacing="3">SER TÃO HOSPITALEIRO</text>
+</svg>
