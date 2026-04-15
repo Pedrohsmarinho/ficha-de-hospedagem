@@ -70,6 +70,15 @@
   box-shadow: 0 6px 16px rgba(47, 124, 79, 0.4);
 }
 
+.export-pdf-btn {
+  background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
+  box-shadow: 0 4px 12px rgba(192, 57, 43, 0.3);
+}
+
+.export-pdf-btn:hover {
+  box-shadow: 0 6px 16px rgba(192, 57, 43, 0.4);
+}
+
 .filter-section {
   background: #f8f9fa;
   border: 2px solid #e0e0e0;

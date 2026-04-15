@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
 import type { HospedagemFormData } from "./types";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface HospedesListProps {
   hospedes: HospedagemFormData[];
@@ -184,6 +186,115 @@ export const HospedesList: React.FC<HospedesListProps> = ({
     XLSX.writeFile(workbook, nomeArquivo);
   };
 
+  const exportarParaPDF = () => {
+    if (hospedesFiltrados.length === 0) {
+      alert("Nenhum hóspede para exportar!");
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: "landscape" });
+
+    doc.setFontSize(16);
+    doc.text("Pousada Verdes Arcos - Lista de Hóspedes", 14, 15);
+
+    doc.setFontSize(10);
+    const periodoTexto =
+      filtroInicio && filtroFim
+        ? `Período: ${new Date(filtroInicio + "T12:00:00").toLocaleDateString("pt-BR")} a ${new Date(filtroFim + "T12:00:00").toLocaleDateString("pt-BR")}`
+        : `Gerado em: ${new Date().toLocaleDateString("pt-BR")}`;
+    doc.text(periodoTexto, 14, 23);
+    doc.text(`Total: ${hospedesFiltrados.length} hóspede(s)`, 14, 29);
+
+    const cabecalho = [
+      "Check-in",
+      "Check-out",
+      "Apto",
+      "Hóspede / Empresa",
+      "CPF / CNPJ",
+      "Cidade/UF",
+      "Celular",
+      "Pagamento",
+      "Diárias",
+      "Valor Total",
+    ];
+
+    const linhas: string[][] = [];
+
+    hospedesFiltrados.forEach((h) => {
+      const nome =
+        h.tipoPessoa === "PF"
+          ? h.nome
+          : h.razaoSocial || h.nomeFantasia;
+      const docNum = h.tipoPessoa === "PF" ? h.cpf : h.cnpj;
+      const cidade = h.cidade ? `${h.cidade}/${h.estado}` : "";
+      const valor = h.valorTotal
+        ? `R$ ${parseFloat(h.valorTotal).toFixed(2)}`
+        : "";
+
+      linhas.push([
+        new Date(h.periodoInicio + "T12:00:00").toLocaleDateString("pt-BR"),
+        new Date(h.periodoFim + "T12:00:00").toLocaleDateString("pt-BR"),
+        h.tipoApartamento,
+        nome,
+        docNum || "",
+        cidade,
+        h.celular || "",
+        h.formaPagamento || "",
+        h.numeroDiarias ? String(h.numeroDiarias) : "",
+        valor,
+      ]);
+
+      h.acompanhantes
+        .filter((ac) => ac.nome)
+        .forEach((ac) => {
+          linhas.push([
+            "",
+            "",
+            "",
+            `  └ ${ac.nome}`,
+            ac.cpf || "",
+            "",
+            "",
+            "",
+            "",
+            "",
+          ]);
+        });
+    });
+
+    autoTable(doc, {
+      head: [cabecalho],
+      body: linhas,
+      startY: 34,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [34, 120, 34], textColor: 255, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [240, 250, 240] },
+      didParseCell: (data) => {
+        // Linha de acompanhante: texto em itálico e cor mais suave
+        if (
+          data.section === "body" &&
+          typeof data.cell.raw === "string" &&
+          (data.cell.raw as string).startsWith("  └")
+        ) {
+          data.cell.styles.fontStyle = "italic";
+          data.cell.styles.textColor = [80, 80, 80];
+        }
+      },
+    });
+
+    let nomeArquivo = "hospedes_verdes_arcos";
+    if (filtroInicio && filtroFim) {
+      nomeArquivo += `_${filtroInicio}_a_${filtroFim}`;
+    } else if (filtroInicio) {
+      nomeArquivo += `_a_partir_de_${filtroInicio}`;
+    } else if (filtroFim) {
+      nomeArquivo += `_ate_${filtroFim}`;
+    }
+    nomeArquivo += ".pdf";
+
+    doc.save(nomeArquivo);
+  };
+
   const limparFiltros = () => {
     setFiltroInicio("");
     setFiltroFim("");
@@ -236,13 +347,22 @@ export const HospedesList: React.FC<HospedesListProps> = ({
         </button>
 
         {hospedesFiltrados.length > 0 && (
-          <button
-            type="button"
-            onClick={exportarParaExcel}
-            className="export-btn"
-          >
-            📊 Exportar para Excel
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={exportarParaExcel}
+              className="export-btn"
+            >
+              📊 Exportar para Excel
+            </button>
+            <button
+              type="button"
+              onClick={exportarParaPDF}
+              className="export-btn export-pdf-btn"
+            >
+              📄 Exportar para PDF
+            </button>
+          </>
         )}
       </div>
 
@@ -296,7 +416,7 @@ export const HospedesList: React.FC<HospedesListProps> = ({
         </div>
       ) : (
         <div className="hospedes-grid">
-          {hospedesFiltrados.map((hospede, index) => {
+          {hospedesFiltrados.map((hospede) => {
             const indexOriginal = hospedes.indexOf(hospede);
             return (
               <div key={indexOriginal} className="hospede-card">
