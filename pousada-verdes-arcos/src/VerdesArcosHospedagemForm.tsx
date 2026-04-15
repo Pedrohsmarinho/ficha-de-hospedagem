@@ -1,6 +1,40 @@
 import React, { useState } from "react";
 import type { HospedagemFormData, Companion } from "./types";
 
+const maskCPF = (value: string) =>
+  value
+    .replace(/\D/g, "")
+    .slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+
+const maskCNPJ = (value: string) =>
+  value
+    .replace(/\D/g, "")
+    .slice(0, 14)
+    .replace(/(\d{2})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+
+const maskCEP = (value: string) =>
+  value
+    .replace(/\D/g, "")
+    .slice(0, 8)
+    .replace(/(\d{5})(\d{1,3})$/, "$1-$2");
+
+const maskPhone = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 10)
+    return digits
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{4})(\d{1,4})$/, "$1-$2");
+  return digits
+    .replace(/(\d{2})(\d)/, "($1) $2")
+    .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
+};
+
 const emptyCompanion = (id: number): Companion => ({
   id,
   nome: "",
@@ -58,8 +92,16 @@ export const VerdesArcosHospedagemForm = ({ onSave }: VerdesArcosHospedagemFormP
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    let maskedValue = value;
+    if (name === "cpf") maskedValue = maskCPF(value);
+    else if (name === "cnpj") maskedValue = maskCNPJ(value);
+    else if (name === "cep") maskedValue = maskCEP(value);
+    else if (name === "telResidencial" || name === "telComercial" || name === "celular")
+      maskedValue = maskPhone(value);
+
     setForm((prev: HospedagemFormData) => {
-      const newForm = { ...prev, [name]: value };
+      const newForm = { ...prev, [name]: maskedValue };
       
       // Calcular diárias automaticamente quando as datas mudarem
       if (name === "periodoInicio" || name === "periodoFim") {
@@ -83,10 +125,11 @@ export const VerdesArcosHospedagemForm = ({ onSave }: VerdesArcosHospedagemFormP
     field: keyof Companion,
     value: string
   ) => {
+    const maskedValue = field === "cpf" ? maskCPF(value) : value;
     setForm((prev: HospedagemFormData) => ({
       ...prev,
       acompanhantes: prev.acompanhantes.map((ac) =>
-        ac.id === id ? { ...ac, [field]: value } : ac
+        ac.id === id ? { ...ac, [field]: maskedValue } : ac
       ),
     }));
   };
